@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import API from "../api";
+import API from "../../utils/api";
 
 export default function PlantCard({ plant, role, onUpdate, onDelete }) {
   const [editMode, setEditMode] = useState(false);

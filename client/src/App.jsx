@@ -1,33 +1,40 @@
-import React, { useState, useEffect } from "react";
+import React from "react";
 import { Routes, Route, Navigate } from "react-router-dom";
-import Navbar from "./components/Navbar";
-import Footer from "./components/Footer";
+import Navbar from "./components/Layout/Navbar";
+import Footer from "./components/Layout/Footer";
 import Home from "./pages/Home";
 import Login from "./components/Auth/Login";
 import Signup from "./components/Auth/Signup";
+import { AuthProvider, AuthContext } from "./context/AuthContext";
 
 function App() {
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
-
-  useEffect(() => {
-    const token = localStorage.getItem("token");
-    setIsAuthenticated(!!token);
-  }, []);
-
   return (
-    <div>
-      <Navbar setIsAuthenticated={setIsAuthenticated} />
+    <AuthProvider>
+      <Navbar />
       <Routes>
         <Route
           path="/"
-          element={isAuthenticated ? <Home /> : <Navigate to="/login" />}
+          element={
+            <RequireAuth>
+              <Home />
+            </RequireAuth>
+          }
         />
-        <Route path="/login" element={<Login setIsAuthenticated={setIsAuthenticated} />} />
+        <Route path="/login" element={<Login />} />
         <Route path="/signup" element={<Signup />} />
       </Routes>
       <Footer />
-    </div>
+    </AuthProvider>
   );
+}
+
+// ✅ Protected Route
+function RequireAuth({ children }) {
+  const { isAuthenticated } = React.useContext(AuthContext);
+  if (!isAuthenticated) {
+    return <Navigate to="/login" />;
+  }
+  return children;
 }
 
 export default App;

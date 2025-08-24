@@ -1,6 +1,6 @@
 import React, { useState } from "react";
-import API from "../api";
-import Notification from "./Notification";
+import API from "../../utils/api";
+import Notification from "../Layout/Notification";
 
 function ConfirmModal({ message, onConfirm, onCancel }) {
   return (

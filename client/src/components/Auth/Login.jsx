@@ -1,140 +1,101 @@
-import React, { useState } from "react";
+import React, { useState, useContext, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import API from "../../api";
+import API from "../../utils/api";
+import Notification from "../Layout/Notification";
+import { AuthContext } from "../../context/AuthContext";
 
-export default function Login({ setIsAuthenticated }) {
-  const [form, setForm] = useState({ email: "", password: "" });
-  const [errors, setErrors] = useState({}); // ✅ inline errors
+/**
+ * Login Component
+ * This component allows users to log in using their email and password.
+ * It handles form input, communicates with the backend, shows notifications,
+ * and redirects users once they are successfully logged in.
+ */
+export default function Login() {
+  // State to keep track of the form inputs
+  const [formData, setFormData] = useState({ email: "", password: "" });
 
+  // State to display notifications (success or error messages)
+  const [notification, setNotification] = useState({ message: "", type: "success" });
+
+  // Access authentication context to know if the user is logged in
+  const { isAuthenticated, setIsAuthenticated, setRole } = useContext(AuthContext);
+
+  // Hook to programmatically navigate the user to another page
   const navigate = useNavigate();
 
+  // If the user is already logged in, send them to the home page
+  useEffect(() => {
+    if (isAuthenticated) {
+      navigate("/");
+    }
+  }, [isAuthenticated, navigate]);
+
+  // Update the form data as the user types
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setForm({ ...form, [name]: value });
-    setErrors({ ...errors, [name]: "" }); // clear error while typing
+    setFormData({ ...formData, [name]: value });
   };
 
+  // Handle the login form submission
   const handleSubmit = async (e) => {
-    e.preventDefault();
-
-    const newErrors = {};
-    if (!form.email.trim()) newErrors.email = "Email is required";
-    if (!form.password.trim()) newErrors.password = "Password is required";
-
-    if (Object.keys(newErrors).length > 0) {
-      setErrors(newErrors);
-      return;
-    }
+    e.preventDefault(); // Prevent the page from refreshing
 
     try {
-      const res = await API.post("/auth/login", form);
-      localStorage.setItem("token", res.data.token);
-      localStorage.setItem("role", res.data.role); // store role
+      // Send login request to the backend
+      const response = await API.post("/auth/login", formData);
+
+      // Save the token and role in localStorage so the user stays logged in
+      localStorage.setItem("token", response.data.token);
+      localStorage.setItem("role", response.data.role);
+
+      // Update global authentication state
       setIsAuthenticated(true);
-      navigate("/");
+      setRole(response.data.role);
+
+      // Show a success notification
+      setNotification({ message: "Login successful!", type: "success" });
+
+      // Redirect to the home page after a short delay
+      setTimeout(() => navigate("/"), 800);
     } catch (err) {
-      setErrors({ api: err.response?.data?.msg || "Login failed" });
+      // If login fails, show an error notification
+      setNotification({
+        message: err.response?.data?.msg || "Login failed. Please try again.",
+        type: "error",
+      });
     }
   };
 
-  const inputBorderStyle = (field) => ({
-    ...inputStyle,
-    border: errors[field] ? "2px solid #ef4444" : "1px solid #ccc",
-  });
-
   return (
-    <div style={containerStyle}>
-      <div style={boxStyle}>
-        <h2 style={{ marginBottom: "1.5rem", color: "#333" }}>Login</h2>
-        {errors.api && <div style={apiErrorStyle}>{errors.api}</div>}
-        <form onSubmit={handleSubmit} style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
-          <input
-            type="email"
-            name="email"
-            value={form.email}
-            onChange={handleChange}
-            placeholder="Email"
-            style={inputBorderStyle("email")}
-          />
-          {errors.email && <div style={errorStyle}>{errors.email}</div>}
+    <div className="login-container">
+      {/* Notification popup */}
+      <Notification
+        message={notification.message}
+        type={notification.type}
+        duration={3000}
+        onClose={() => setNotification({ message: "", type: "success" })}
+      />
 
-          <input
-            type="password"
-            name="password"
-            value={form.password}
-            onChange={handleChange}
-            placeholder="Password"
-            style={inputBorderStyle("password")}
-          />
-          {errors.password && <div style={errorStyle}>{errors.password}</div>}
-
-          <button type="submit" style={buttonStyle}>Login</button>
-        </form>
-
-        <p style={{ marginTop: "1rem", fontSize: "0.9rem", color: "#555" }}>
-          Don’t have an account?{" "}
-          <span onClick={() => navigate("/signup")} style={linkStyle}>
-            Signup
-          </span>
-        </p>
-      </div>
+      {/* Login form */}
+      <form onSubmit={handleSubmit}>
+        <input
+          type="email"
+          name="email"
+          placeholder="Enter your email"
+          value={formData.email}
+          onChange={handleChange}
+          required
+        />
+        <input
+          type="password"
+          name="password"
+          placeholder="Enter your password"
+          value={formData.password}
+          onChange={handleChange}
+          required
+        />
+        <button type="submit">Login</button>
+      </form>
     </div>
   );
 }
-
-// Styles
-const containerStyle = {
-  minHeight: "100vh",
-  display: "flex",
-  alignItems: "center",
-  justifyContent: "center",
-  background: "linear-gradient(135deg, #a8edea, #fed6e3)",
-  padding: "2rem",
-};
-
-const boxStyle = {
-  background: "#fff",
-  padding: "2rem",
-  borderRadius: "12px",
-  boxShadow: "0 6px 15px rgba(0,0,0,0.15)",
-  width: "100%",
-  maxWidth: "400px",
-  textAlign: "center",
-};
-
-const inputStyle = {
-  padding: "0.75rem",
-  borderRadius: "8px",
-  border: "1px solid #ccc",
-  fontSize: "1rem",
-};
-
-const buttonStyle = {
-  padding: "0.75rem",
-  border: "none",
-  borderRadius: "8px",
-  background: "#2e7d32",
-  color: "#fff",
-  fontSize: "1rem",
-  fontWeight: "bold",
-  cursor: "pointer",
-};
-
-const errorStyle = {
-  color: "#ef4444",
-  fontSize: "0.85rem",
-  marginTop: "4px",
-};
-
-const apiErrorStyle = {
-  color: "#ef4444",
-  fontSize: "0.9rem",
-  marginBottom: "8px",
-};
-
-const linkStyle = {
-  color: "#2e7d32",
-  fontWeight: "bold",
-  cursor: "pointer",
-  textDecoration: "underline",
-};

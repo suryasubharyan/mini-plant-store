@@ -1,14 +1,15 @@
-import { useState, useEffect, useRef, useCallback } from "react";
-import API from "../api";
-import PlantCard from "../components/PlantCard";
-import PlantCardSkeleton from "../components/PlantCardSkeleton";
-import SearchInput from "../components/SearchInput";
-import DropdownFilter from "../components/DropdownFilter";
+import { useState, useEffect, useRef, useCallback, useContext } from "react";
+import API from "../utils/api";
+import PlantCard from "../components/Plants/PlantCard";
+import SearchInput from "../components/Search/SearchInput";
+import DropdownFilter from "../components/Plants/DropdownFilter";
 import useDebounce from "../hooks/useDebounce";
-import AddPlantModal from "../components/AddPlantModal";
-import EditPlantModal from "../components/EditPlantModal";
+import AddPlantModal from "../components/Modals/AddPlantModal";
+import EditPlantModal from "../components/Modals/EditPlantModal";
+import { AuthContext } from "../context/AuthContext"; // ✅ use context
 
 export default function Home() {
+  const { role, isAuthenticated } = useContext(AuthContext); // ✅ use context
   const [plants, setPlants] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
@@ -21,9 +22,6 @@ export default function Home() {
   // Pagination
   const [page, setPage] = useState(1);
   const [hasMore, setHasMore] = useState(true);
-
-  // ✅ Correct role handling
-  const role = localStorage.getItem("role") || "";
 
   const debouncedSearchTerm = useDebounce(searchTerm, 500);
   const observer = useRef();
@@ -59,7 +57,9 @@ export default function Home() {
 
   // Fetch plants with search + filter + pagination
   useEffect(() => {
+    if (!isAuthenticated) return; // ✅ stop if user is not logged in
     setLoading(true);
+
     API.get("/plants", {
       params: { name: debouncedSearchTerm, category: categoryFilter, page, limit: 6 },
     })
@@ -73,7 +73,7 @@ export default function Home() {
       })
       .catch(console.error)
       .finally(() => setLoading(false));
-  }, [debouncedSearchTerm, categoryFilter, page, refreshFlag]);
+  }, [debouncedSearchTerm, categoryFilter, page, refreshFlag, isAuthenticated]);
 
   // Reset plants & page when search/filter changes
   useEffect(() => {
@@ -132,8 +132,34 @@ export default function Home() {
         )}
       </div>
 
-      {loading && <p style={{ textAlign: "center", marginTop: "16px" }}>Loading...</p>}
-      {!hasMore && !loading && <p style={{ textAlign: "center", marginTop: "16px", color: "#666" }}>No more plants</p>}
+      {loading && (
+  <div style={loaderContainerStyle}>
+    <div style={loaderStyle}></div>
+    <style>{`
+      @keyframes spin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+      }
+    `}</style>
+  </div>
+)}
+
     </div>
   );
 }
+
+const loaderContainerStyle = {
+  display: "flex",
+  justifyContent: "center",
+  alignItems: "center",
+  marginTop: "16px",
+};
+
+const loaderStyle = {
+  border: "6px solid #f3f3f3",
+  borderTop: "6px solid #2e7d32",
+  borderRadius: "50%",
+  width: "40px",
+  height: "40px",
+  animation: "spin 1s linear infinite",
+};

@@ -1,6 +1,6 @@
 import React, { useState } from "react";
-import Notification from "../components/Notification";
-import API from "../api";
+import Notification from "../Layout/Notification";
+import API from "../../utils/api";
 
 export default function AddPlantModal({ onClose, onAdd }) {
   const [form, setForm] = useState({ name: "", price: "", categories: "", available: true });
