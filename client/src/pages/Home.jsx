@@ -15,13 +15,15 @@ export default function Home() {
   const [categoryFilter, setCategoryFilter] = useState("");
   const [categories, setCategories] = useState([]);
   const [refreshFlag, setRefreshFlag] = useState(false);
-  const role  = useState(localStorage.getItem("role") || "");
   const [addModalOpen, setAddModalOpen] = useState(false);
   const [editModalPlant, setEditModalPlant] = useState(null);
 
-  // pagination state
+  // Pagination
   const [page, setPage] = useState(1);
   const [hasMore, setHasMore] = useState(true);
+
+  // ✅ Correct role handling
+  const role = localStorage.getItem("role") || "";
 
   const debouncedSearchTerm = useDebounce(searchTerm, 500);
   const observer = useRef();
@@ -31,11 +33,13 @@ export default function Home() {
     (node) => {
       if (loading) return;
       if (observer.current) observer.current.disconnect();
+
       observer.current = new IntersectionObserver((entries) => {
         if (entries[0].isIntersecting && hasMore) {
           setPage((prev) => prev + 1);
         }
       });
+
       if (node) observer.current.observe(node);
     },
     [loading, hasMore]
@@ -71,7 +75,7 @@ export default function Home() {
       .finally(() => setLoading(false));
   }, [debouncedSearchTerm, categoryFilter, page, refreshFlag]);
 
-  // Reset when search/filter changes
+  // Reset plants & page when search/filter changes
   useEffect(() => {
     setPage(1);
     setPlants([]);
@@ -103,19 +107,9 @@ export default function Home() {
         </div>
       )}
 
-      {/* Add Plant Modal */}
-      {addModalOpen && (
-        <AddPlantModal onClose={() => setAddModalOpen(false)} onAdd={() => setRefreshFlag(!refreshFlag)} />
-      )}
-
-      {/* Edit Plant Modal */}
-      {editModalPlant && (
-        <EditPlantModal
-          plant={editModalPlant}
-          onClose={() => setEditModalPlant(null)}
-          onUpdate={() => setRefreshFlag(!refreshFlag)}
-        />
-      )}
+      {/* Add/Edit Modals */}
+      {addModalOpen && <AddPlantModal onClose={() => setAddModalOpen(false)} onAdd={() => setRefreshFlag(!refreshFlag)} />}
+      {editModalPlant && <EditPlantModal plant={editModalPlant} onClose={() => setEditModalPlant(null)} onUpdate={() => setRefreshFlag(!refreshFlag)} />}
 
       {/* Search + Filter */}
       <div style={{ marginBottom: "24px", display: "flex", gap: "16px", flexWrap: "wrap" }}>
