@@ -1,7 +1,7 @@
 import axios from "axios";
 
 const API = axios.create({
-  baseURL: "http://localhost:5000/api", // ✅ backend URL
+  baseURL: "https://mini-plant-store-1-38n4.onrender.com/", // ✅ backend URL
 });
 
 // Attach token automatically for protected routes
