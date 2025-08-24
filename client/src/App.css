@@ -1,0 +1,20 @@
+/* Desktop */
+.nav-links {
+  display: flex;
+  gap: 1rem;
+}
+
+/* Hide hamburger on desktop */
+.hamburger {
+  display: none !important;
+}
+
+/* Mobile */
+@media (max-width: 768px) {
+  .nav-links {
+    display: none !important;
+  }
+  .hamburger {
+    display: flex !important;
+  }
+}
