@@ -6,59 +6,51 @@ import { AuthContext } from "../../context/AuthContext";
 
 /**
  * Login Component
- * This component allows users to log in using their email and password.
- * It handles form input, communicates with the backend, shows notifications,
- * and redirects users once they are successfully logged in.
+ * Allows users to log in with email & password.
+ * Handles form input, API call, notifications, and redirects.
  */
 export default function Login() {
-  // State to keep track of the form inputs
+  // State for form inputs
   const [formData, setFormData] = useState({ email: "", password: "" });
 
-  // State to display notifications (success or error messages)
+  // Notification state
   const [notification, setNotification] = useState({ message: "", type: "success" });
 
-  // Access authentication context to know if the user is logged in
+  // Auth context
   const { isAuthenticated, setIsAuthenticated, setRole } = useContext(AuthContext);
 
-  // Hook to programmatically navigate the user to another page
   const navigate = useNavigate();
 
-  // If the user is already logged in, send them to the home page
+  // If user is already logged in, redirect home
   useEffect(() => {
-    if (isAuthenticated) {
-      navigate("/");
-    }
+    if (isAuthenticated) navigate("/");
   }, [isAuthenticated, navigate]);
 
-  // Update the form data as the user types
+  // Update inputs
   const handleChange = (e) => {
-    const { name, value } = e.target;
-    setFormData({ ...formData, [name]: value });
+    setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
-  // Handle the login form submission
+  // Handle login form submit
   const handleSubmit = async (e) => {
-    e.preventDefault(); // Prevent the page from refreshing
+    e.preventDefault();
 
     try {
-      // Send login request to the backend
       const response = await API.post("/auth/login", formData);
 
-      // Save the token and role in localStorage so the user stays logged in
+      // Save auth data
       localStorage.setItem("token", response.data.token);
       localStorage.setItem("role", response.data.role);
 
-      // Update global authentication state
       setIsAuthenticated(true);
       setRole(response.data.role);
 
-      // Show a success notification
+      // Success notification
       setNotification({ message: "Login successful!", type: "success" });
 
-      // Redirect to the home page after a short delay
+      // Redirect after short delay
       setTimeout(() => navigate("/"), 800);
     } catch (err) {
-      // If login fails, show an error notification
       setNotification({
         message: err.response?.data?.msg || "Login failed. Please try again.",
         type: "error",
@@ -67,8 +59,18 @@ export default function Login() {
   };
 
   return (
-    <div className="login-container">
-      {/* Notification popup */}
+    <div
+      style={{
+        minHeight: "100vh",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        background: "linear-gradient(135deg, #a8edea, #fed6e3)", // same bg as signup
+        padding: "2rem",
+        position: "relative",
+      }}
+    >
+      {/* Notification */}
       <Notification
         message={notification.message}
         type={notification.type}
@@ -76,26 +78,80 @@ export default function Login() {
         onClose={() => setNotification({ message: "", type: "success" })}
       />
 
-      {/* Login form */}
-      <form onSubmit={handleSubmit}>
-        <input
-          type="email"
-          name="email"
-          placeholder="Enter your email"
-          value={formData.email}
-          onChange={handleChange}
-          required
-        />
-        <input
-          type="password"
-          name="password"
-          placeholder="Enter your password"
-          value={formData.password}
-          onChange={handleChange}
-          required
-        />
-        <button type="submit">Login</button>
-      </form>
+      {/* Login form card */}
+      <div
+        style={{
+          background: "#fff",
+          padding: "2rem",
+          borderRadius: "12px",
+          boxShadow: "0 6px 15px rgba(0,0,0,0.15)",
+          width: "100%",
+          maxWidth: "400px",
+          textAlign: "center",
+        }}
+      >
+        <h2 style={{ marginBottom: "1.5rem", color: "#333" }}>Login</h2>
+
+        <form
+          onSubmit={handleSubmit}
+          style={{ display: "flex", flexDirection: "column", gap: "1rem" }}
+        >
+          <input
+            type="email"
+            name="email"
+            placeholder="Email"
+            value={formData.email}
+            onChange={handleChange}
+            required
+            style={inputStyle}
+          />
+          <input
+            type="password"
+            name="password"
+            placeholder="Password"
+            value={formData.password}
+            onChange={handleChange}
+            required
+            style={inputStyle}
+          />
+          <button type="submit" style={buttonStyle}>
+            Login
+          </button>
+        </form>
+
+        {/* Redirect to signup */}
+        <p style={{ marginTop: "1rem", fontSize: "0.9rem", color: "#555" }}>
+          Don’t have an account?{" "}
+          <span onClick={() => navigate("/signup")} style={linkStyle}>
+            Signup
+          </span>
+        </p>
+      </div>
     </div>
   );
 }
+
+// Same styles as Signup
+const inputStyle = {
+  padding: "0.75rem",
+  border: "1px solid #ccc",
+  borderRadius: "8px",
+  fontSize: "1rem",
+};
+const buttonStyle = {
+  padding: "0.75rem",
+  border: "none",
+  borderRadius: "8px",
+  background: "#2e7d32",
+  color: "#fff",
+  fontSize: "1rem",
+  fontWeight: "bold",
+  cursor: "pointer",
+  transition: "background 0.3s",
+};
+const linkStyle = {
+  color: "#2e7d32",
+  fontWeight: "bold",
+  cursor: "pointer",
+  textDecoration: "underline",
+};

@@ -1,34 +1,42 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useContext } from "react";
 import { useNavigate } from "react-router-dom";
+import { AuthContext } from "../../context/AuthContext";
 
-export default function Navbar({ setIsAuthenticated }) {
+export default function Navbar() {
   const navigate = useNavigate();
+
+  // Pull auth state + logout function from context
+  const { isAuthenticated, logout } = useContext(AuthContext);
+
+  // State for mobile menu toggle (hamburger open/close)
   const [isOpen, setIsOpen] = useState(false);
+
+  // Track if screen is mobile (<768px)
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
 
-  const handleLogout = () => {
-    localStorage.clear();
-    setIsAuthenticated(false);
-    navigate("/login");
-    setIsOpen(false);
-  };
-
-  const isLoggedIn = !!localStorage.getItem("token");
-
-  // Update isMobile on resize
+  // Update `isMobile` whenever window resizes
   useEffect(() => {
     const handleResize = () => setIsMobile(window.innerWidth < 768);
     window.addEventListener("resize", handleResize);
+
+    // cleanup to avoid memory leaks
     return () => window.removeEventListener("resize", handleResize);
   }, []);
+
+  // When user logs out
+  const handleLogout = () => {
+    logout();            // reset auth state + clear localStorage
+    navigate("/login");  // redirect to login page
+    setIsOpen(false);    // close mobile menu if open
+  };
 
   return (
     <nav
       style={{
-        background: "#2e7d32",
+        background: "#2e7d32", // green background
         padding: "0.8rem 1.5rem",
         color: "white",
-        position: "sticky",
+        position: "sticky",    // stays at top while scrolling
         top: 0,
         zIndex: 1000,
         boxShadow: "0 2px 6px rgba(0,0,0,0.15)",
@@ -36,28 +44,29 @@ export default function Navbar({ setIsAuthenticated }) {
     >
       <div
         style={{
-          maxWidth: "1200px",
+          maxWidth: "1200px", // center navbar content
           margin: "0 auto",
           display: "flex",
           justifyContent: "space-between",
           alignItems: "center",
         }}
       >
+        {/* Logo / Brand */}
         <span
           style={{
             fontSize: "1.2rem",
             fontWeight: "bold",
             cursor: "pointer",
           }}
-         
+          onClick={() => navigate("/")} // clicking logo goes home
         >
           🌱 Mini Plant Store
         </span>
 
-        {/* Desktop Links */}
+        {/* --- Desktop Links (shown only if not mobile) --- */}
         {!isMobile && (
           <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
-            {isLoggedIn ? (
+            {isAuthenticated ? (
               <button onClick={handleLogout} style={styles.button}>
                 Logout
               </button>
@@ -74,10 +83,10 @@ export default function Navbar({ setIsAuthenticated }) {
           </div>
         )}
 
-        {/* Hamburger (Mobile) */}
+        {/* --- Hamburger Icon (mobile only) --- */}
         {isMobile && (
           <div
-            onClick={() => setIsOpen(!isOpen)}
+            onClick={() => setIsOpen(!isOpen)} // toggle menu
             style={{ display: "flex", flexDirection: "column", cursor: "pointer" }}
           >
             <span style={styles.bar}></span>
@@ -87,7 +96,7 @@ export default function Navbar({ setIsAuthenticated }) {
         )}
       </div>
 
-      {/* Mobile Menu */}
+      {/* --- Mobile Menu (dropdown) --- */}
       {isOpen && isMobile && (
         <div
           style={{
@@ -101,7 +110,7 @@ export default function Navbar({ setIsAuthenticated }) {
             transition: "all 0.3s ease",
           }}
         >
-          {isLoggedIn ? (
+          {isAuthenticated ? (
             <button onClick={handleLogout} style={styles.mobileButton}>
               Logout
             </button>
@@ -110,7 +119,7 @@ export default function Navbar({ setIsAuthenticated }) {
               <button
                 onClick={() => {
                   navigate("/login");
-                  setIsOpen(false);
+                  setIsOpen(false); // close after click
                 }}
                 style={styles.mobileButton}
               >
@@ -119,7 +128,7 @@ export default function Navbar({ setIsAuthenticated }) {
               <button
                 onClick={() => {
                   navigate("/signup");
-                  setIsOpen(false);
+                  setIsOpen(false); // close after click
                 }}
                 style={styles.mobileButton}
               >
@@ -133,6 +142,7 @@ export default function Navbar({ setIsAuthenticated }) {
   );
 }
 
+/* --- Reusable styles for buttons and hamburger bars --- */
 const styles = {
   button: {
     background: "white",
